@@ -157,7 +157,12 @@
   .g-prio-1{background:var(--coral-tint);color:var(--coral);}
   .g-prio-2{background:var(--amber-tint);color:var(--amber-deep);}
   .g-prio-3{background:var(--line);color:var(--ink-soft);}
-  .g-due-dot{flex-shrink:0;width:8px;height:8px;border-radius:50%;background:var(--teal);}
+  .g-due-dot{flex-shrink:0;width:8px;height:8px;border-radius:50%;background:var(--amber);}
+  .g-mastered-icon{flex-shrink:0;width:15px;height:15px;stroke:var(--teal);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .g-section-title{cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;}
+  .g-section-title svg{width:13px;height:13px;stroke:var(--ink-soft);stroke-width:2.2;fill:none;transition:transform .2s;}
+  .g-section-title.collapsed svg{transform:rotate(-90deg);}
+  .g-section-count{font-weight:400;text-transform:none;letter-spacing:0;}
   .g-ex{font-family:'Newsreader',serif;font-size:15px;color:var(--ink);}
   .quiz-row{display:flex;gap:8px;}
   .quiz-row input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13.5px;font-family:'Inter',sans-serif;}
@@ -289,8 +294,14 @@
         <div class="chip coral" id="gDueChip">0 à réviser</div>
       </div>
 
-      <div id="gListArea" style="display:flex;flex-direction:column;gap:16px;">
+      <div id="gListArea" style="display:flex;flex-direction:column;gap:14px;">
         <div class="hint" id="gListHint">Essentiel = à voir en premier. Touche une fiche pour l'ouvrir librement, dans l'ordre que tu veux.</div>
+        <div class="folder-row" id="gPriorityRow">
+          <button class="folder-btn active" data-prio="0" onclick="setGrammarPriorityFilter(0)">Tout</button>
+          <button class="folder-btn" data-prio="1" onclick="setGrammarPriorityFilter(1)">Essentiel</button>
+          <button class="folder-btn" data-prio="2" onclick="setGrammarPriorityFilter(2)">Important</button>
+          <button class="folder-btn" data-prio="3" onclick="setGrammarPriorityFilter(3)">Perfectionnement</button>
+        </div>
         <div id="gListSections"></div>
       </div>
 
@@ -1300,24 +1311,46 @@ function renderGrammarReview(){
     renderGrammarList();
   }
 }
+let grammarPriorityFilter = 0;
+const collapsedGrammarSections = new Set();
+
+function setGrammarPriorityFilter(prio){
+  grammarPriorityFilter = prio;
+  document.querySelectorAll('#gPriorityRow .folder-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.prio) === prio));
+  renderGrammarList();
+}
+function toggleGrammarSection(letter){
+  if(collapsedGrammarSections.has(letter)) collapsedGrammarSections.delete(letter);
+  else collapsedGrammarSections.add(letter);
+  renderGrammarList();
+}
 function renderGrammarList(){
   const dueIds = new Set(getDueGrammar().map(p => p.id));
   let html = '';
   ['L', 'G', 'V'].forEach(letter => {
-    const items = grammarPoints.filter(p => p.code[0] === letter).slice()
+    const items = grammarPoints.filter(p => p.code[0] === letter)
+      .filter(p => grammarPriorityFilter === 0 || p.priority === grammarPriorityFilter)
+      .slice()
       .sort((a, b) => a.priority - b.priority || a.code.localeCompare(b.code, undefined, {numeric: true}));
     if(items.length === 0) return;
-    html += '<div class="g-section"><p class="g-section-title">' + GRAMMAR_GROUPS[letter] + ' (' + letter + ')</p>';
-    items.forEach(p => {
-      html += '<div class="g-row" onclick="openGrammarFiche(\'' + p.id + '\')">' +
-        '<div class="g-row-main"><span class="g-row-code">' + p.code + '</span> <span class="g-row-title">' + escapeHtml(p.title) + '</span></div>' +
-        (dueIds.has(p.id) ? '<span class="g-due-dot" title="à réviser"></span>' : '') +
-        '<span class="g-prio g-prio-' + p.priority + '">' + PRIORITY_LABELS[p.priority] + '</span>' +
-        '</div>';
-    });
+    const collapsed = collapsedGrammarSections.has(letter);
+    html += '<div class="g-section"><p class="g-section-title' + (collapsed ? ' collapsed' : '') + '" onclick="toggleGrammarSection(\'' + letter + '\')">' +
+      '<span>' + GRAMMAR_GROUPS[letter] + ' (' + letter + ') <span class="g-section-count">· ' + items.length + '</span></span>' +
+      '<svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></p>';
+    if(!collapsed){
+      items.forEach(p => {
+        const mastered = (p.level || 0) >= 3;
+        html += '<div class="g-row" onclick="openGrammarFiche(\'' + p.id + '\')">' +
+          '<div class="g-row-main"><span class="g-row-code">' + p.code + '</span> <span class="g-row-title">' + escapeHtml(p.title) + '</span></div>' +
+          (mastered ? '<svg class="icon g-mastered-icon" viewBox="0 0 24 24" title="maîtrisé"><path d="M20 6L9 17l-5-5"/></svg>' : '') +
+          (dueIds.has(p.id) ? '<span class="g-due-dot" title="à réviser"></span>' : '') +
+          '<span class="g-prio g-prio-' + p.priority + '">' + PRIORITY_LABELS[p.priority] + '</span>' +
+          '</div>';
+      });
+    }
     html += '</div>';
   });
-  document.getElementById('gListSections').innerHTML = html;
+  document.getElementById('gListSections').innerHTML = html || '<div class="empty-state">Aucune fiche dans cette catégorie.</div>';
   document.getElementById('gDueChip').textContent = dueIds.size + ' à réviser';
 }
 function renderGrammarDetail(id){
