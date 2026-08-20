@@ -1,0 +1,8 @@
+{
+  "name": "Mon Anglais",
+  "short_name": "Mon Anglais",
+  "start_url": "./prototype_.html",
+  "display": "standalone",
+  "background_color": "#F6F2E8",
+  "theme_color": "#F6F2E8"
+}
