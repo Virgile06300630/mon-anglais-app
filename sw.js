@@ -1,4 +1,4 @@
-const CACHE = 'mon-anglais-v68';
+const CACHE = 'mon-anglais-v69';
 const PRECACHE_URLS = ['./prototype_.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {
