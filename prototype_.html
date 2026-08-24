@@ -147,6 +147,7 @@
   .g-text .ex-fr{color:var(--ink-soft);}
   .g-text .ex-en{color:var(--teal);font-weight:500;}
 
+  #gListSections{flex-direction:column;gap:14px;}
   .g-section{display:flex;flex-direction:column;gap:8px;}
   .g-section-title{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin:0;}
   .g-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;}
@@ -352,9 +353,12 @@
           <p class="g-prompt-fr" id="gExContext3"></p>
           <div id="gExChoiceRow3" style="display:none;flex-direction:column;gap:8px;"></div>
           <div id="gExFillRow3" style="display:none;">
-            <div class="quiz-row">
-              <input type="text" id="gExAnswer3" placeholder="Ta réponse" onkeydown="if(event.key==='Enter')checkGrammarExercise()">
-              <button class="primary-btn" style="padding:9px 14px;" onclick="checkGrammarExercise()">Vérifier</button>
+            <input type="text" id="gExAnswer3" style="display:none;">
+            <button class="primary-btn" id="gExRevealBtn3" onclick="revealGrammarFillAnswer()">Voir la réponse</button>
+            <div id="gExFillAnswer3" style="display:none;font-weight:600;margin-top:8px;"></div>
+            <div class="know-row" id="gExFillKnowRow3" style="display:none;margin-top:8px;">
+              <button class="know-btn no" onclick="answerGrammarFill(false)">✕ Je n'avais pas</button>
+              <button class="know-btn yes" onclick="answerGrammarFill(true)">✓ J'avais juste</button>
             </div>
           </div>
           <div id="gExMatchRows3" style="display:none;flex-direction:column;gap:8px;"></div>
@@ -420,9 +424,12 @@
           <p class="g-prompt-fr" id="gExContext"></p>
           <div id="gExChoiceRow" style="display:none;flex-direction:column;gap:8px;"></div>
           <div id="gExFillRow" style="display:none;">
-            <div class="quiz-row">
-              <input type="text" id="gExAnswer" placeholder="Ta réponse" onkeydown="if(event.key==='Enter')checkGrammarExercise()">
-              <button class="primary-btn" style="padding:9px 14px;" onclick="checkGrammarExercise()">Vérifier</button>
+            <input type="text" id="gExAnswer" style="display:none;">
+            <button class="primary-btn" id="gExRevealBtn" onclick="revealGrammarFillAnswer()">Voir la réponse</button>
+            <div id="gExFillAnswer" style="display:none;font-weight:600;margin-top:8px;"></div>
+            <div class="know-row" id="gExFillKnowRow" style="display:none;margin-top:8px;">
+              <button class="know-btn no" onclick="answerGrammarFill(false)">✕ Je n'avais pas</button>
+              <button class="know-btn yes" onclick="answerGrammarFill(true)">✓ J'avais juste</button>
             </div>
           </div>
           <div id="gExMatchRows" style="display:none;flex-direction:column;gap:8px;"></div>
@@ -447,9 +454,12 @@
           <p class="g-prompt-fr" id="gExContext2"></p>
           <div id="gExChoiceRow2" style="display:none;flex-direction:column;gap:8px;"></div>
           <div id="gExFillRow2" style="display:none;">
-            <div class="quiz-row">
-              <input type="text" id="gExAnswer2" placeholder="Ta réponse" onkeydown="if(event.key==='Enter')checkGrammarExercise()">
-              <button class="primary-btn" style="padding:9px 14px;" onclick="checkGrammarExercise()">Vérifier</button>
+            <input type="text" id="gExAnswer2" style="display:none;">
+            <button class="primary-btn" id="gExRevealBtn2" onclick="revealGrammarFillAnswer()">Voir la réponse</button>
+            <div id="gExFillAnswer2" style="display:none;font-weight:600;margin-top:8px;"></div>
+            <div class="know-row" id="gExFillKnowRow2" style="display:none;margin-top:8px;">
+              <button class="know-btn no" onclick="answerGrammarFill(false)">✕ Je n'avais pas</button>
+              <button class="know-btn yes" onclick="answerGrammarFill(true)">✓ J'avais juste</button>
             </div>
           </div>
           <div id="gExMatchRows2" style="display:none;flex-direction:column;gap:8px;"></div>
@@ -1812,6 +1822,9 @@ function renderGrammarExercise(){
   if(answerInput) answerInput.value = '';
   exId('gExChoiceRow').style.display = 'none';
   exId('gExFillRow').style.display = 'none';
+  exId('gExFillAnswer').style.display = 'none';
+  exId('gExFillKnowRow').style.display = 'none';
+  exId('gExRevealBtn').style.display = 'inline-block';
   exId('gExMatchRows').style.display = 'none';
   exId('gExMatchCheckBtn').style.display = 'none';
   const noteEl = exId('gExNote');
@@ -1873,6 +1886,26 @@ function checkGrammarExercise(){
     fb.textContent = 'Pas tout à fait — réponse attendue : "' + ex.accepted[0] + '".';
     fb.className = 'g-feedback bad';
   }
+  exId('gExNextBtn').style.display = 'inline-block';
+}
+function revealGrammarFillAnswer(){
+  const ex = currentExerciseSet[currentExerciseIndex];
+  exId('gExRevealBtn').style.display = 'none';
+  const answerEl = exId('gExFillAnswer');
+  answerEl.textContent = ex.accepted[0];
+  answerEl.style.display = 'block';
+  exId('gExFillKnowRow').style.display = 'flex';
+}
+function answerGrammarFill(wasCorrect){
+  const fb = exId('gExFeedback');
+  if(wasCorrect){
+    fb.textContent = 'Correct.';
+    fb.className = 'g-feedback ok';
+  } else {
+    fb.textContent = 'Pas grave, continue !';
+    fb.className = 'g-feedback bad';
+  }
+  exId('gExFillKnowRow').style.display = 'none';
   exId('gExNextBtn').style.display = 'inline-block';
 }
 function checkGrammarMatching(){
